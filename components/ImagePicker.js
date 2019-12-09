@@ -3,6 +3,7 @@ import { encode, decode } from "base64-arraybuffer";
 import { StyleSheet, Alert } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import * as Permissions from "expo-permissions";
+import * as FileSystem from "expo-file-system";
 import { TouchableOpacity } from "react-native-gesture-handler";
 
 const ImgPicker = props => {
@@ -28,9 +29,16 @@ const ImgPicker = props => {
     }
 
     let image = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
       base64: true
     });
+
+    console.log(image);
+
+    const filename = image.uri.split("/").pop();
+    const newPath = FileSystem.documentDirectory + filename;
+
+    FileSystem.writeAsStringAsync(image.uri);
 
     setPickedImage(image);
     props.onImageTaken(image);

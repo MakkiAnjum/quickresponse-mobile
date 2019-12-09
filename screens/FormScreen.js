@@ -39,6 +39,7 @@ class ComplaintFormScreen extends React.Component {
     sentimentCategory: "",
 
     selectedCategory: "",
+    selectedLocation: "",
     openCategoryModal: false,
     titleError: "",
     detailsError: "",
@@ -90,12 +91,7 @@ class ComplaintFormScreen extends React.Component {
 
   doSubmit = async () => {
     const { title, details, location, categoryId } = this.state;
-    if (
-      !this.state.title ||
-      !this.state.details ||
-      !this.state.location ||
-      !this.state.categoryId
-    ) {
+    if (!title || !details || !location || !categoryId) {
       return Alert.alert("Please fill all required inputs.");
     }
     if (this.state.configToken.isSeverity && !this.state.severity) {
@@ -263,6 +259,42 @@ class ComplaintFormScreen extends React.Component {
                     </TouchableOpacity>
                   ) : null}
                 </View>
+
+                {/* location */}
+
+                <View
+                  style={{
+                    marginVertical: 10,
+                    borderColor: "#e4e4e4",
+                    borderWidth: 0.5,
+                    padding: 5,
+                    borderRadius: 10
+                  }}
+                >
+                  <Text style={{ color: "#a9a9a9" }}>Location</Text>
+                  {/* {this.state.selectedLocation ? ( */}
+                  <TouchableOpacity
+                    activeOpacity={0.9}
+                    style={{ ...styles.categoryRow, marginVertical: 10 }}
+                    onPress={this.openModal}
+                  >
+                    <Text style={{ fontSize: 18 }}>
+                      {/* {this.state.selectedCategory.name}{" "} */}
+                      CS Department
+                    </Text>
+
+                    <MaterialCommunityIcons
+                      name="pencil"
+                      size={15}
+                      color="black"
+                      onPress={this.openModal}
+                    />
+                  </TouchableOpacity>
+                  {/* ) : null} */}
+                </View>
+
+                {/* location end */}
+
                 {this.state.configToken.isSeverity ? (
                   <View
                     style={{
