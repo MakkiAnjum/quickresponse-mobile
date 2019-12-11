@@ -6,18 +6,20 @@ import {
   Text,
   StyleSheet,
   Alert,
-  TouchableOpacity
+  TouchableOpacity,
+  ActivityIndicator
 } from "react-native";
 import { getAllNotifications } from "../services/messageService";
 import authService from "../services/authService";
 import config from "../config.json";
 import openSocket from "socket.io-client";
+import Color from "../constants/Color";
 
 const socket = openSocket(config.apiEndpoint);
 
 class NotificationScreen extends Component {
-  state = { notifications: [], user: "" };
-
+  state = { notifications: [], user: "", isLoading: false };
+  willFocusSub = "";
   checkSocketConnection = async () => {
     try {
       const user = await authService.getCurrentUser();
@@ -116,21 +118,33 @@ class NotificationScreen extends Component {
     }
   };
 
-  async componentDidMount() {
-    this.checkSocketConnection();
+  getNotification = async () => {
     try {
       const user = await authService.getCurrentUser();
       if (user == null) return;
+      this.setState({ isLoading: true });
       const { data } = await getAllNotifications();
-      console.log("notification", data.length);
-      this.setState({ notifications: data, user: user });
+      this.setState({ notifications: data, user: user, isLoading: false });
     } catch (ex) {
-      // console.log(ex.response);
       return Alert.alert("Something went wrong.");
     }
+  };
+
+  async componentDidMount() {
+    this.checkSocketConnection();
+    this.getNotification();
+
+    this.willFocusSub = this.props.navigation.addListener(
+      "willFocus",
+      this.getNotification
+    );
   }
 
+  componentWillUnmount() {
+    this.willFocusSub.remove();
+  }
   render() {
+    const { isLoading } = this.state;
     return (
       <SafeAreaView>
         <ScrollView>
@@ -150,49 +164,58 @@ class NotificationScreen extends Component {
               </View>
             ) : (
               <View>
-                {this.state.notifications.length > 0 ? (
-                  <View>
-                    {this.state.notifications.map(notification => (
-                      <View key={notification._id}>
-                        {this.state.user ? (
-                          <TouchableOpacity
-                            activeOpacity={0.9}
-                            onPress={() => {
-                              this.props.navigation.navigate({
-                                routeName: "ComplaintDetail",
-                                params: {
-                                  complaintId: notification.complaintId,
-                                  currentUser: this.state.user
-                                }
-                              });
-                            }}
-                          >
-                            <View style={styles.listItem}>
-                              <View style={{ width: "95%" }} onPres>
-                                <Text
-                                  style={{ fontSize: 16, fontWeight: "600" }}
-                                >
-                                  {notification.msg}
-                                </Text>
-                              </View>
-                            </View>
-                          </TouchableOpacity>
-                        ) : null}
-                      </View>
-                    ))}
-                  </View>
+                {isLoading ? (
+                  <ActivityIndicator color={Color.primaryColor} />
                 ) : (
-                  <View
-                    style={{
-                      flex: 1,
-                      justifyContent: "center",
-                      alignItems: "center",
-                      paddingTop: 30
-                    }}
-                  >
-                    <Text style={{ fontSize: 20, fontWeight: "600" }}>
-                      No Notifications
-                    </Text>
+                  <View>
+                    {this.state.notifications.length > 0 ? (
+                      <View>
+                        {this.state.notifications.map(notification => (
+                          <View key={notification._id}>
+                            {this.state.user ? (
+                              <TouchableOpacity
+                                activeOpacity={0.9}
+                                onPress={() => {
+                                  this.props.navigation.navigate({
+                                    routeName: "ComplaintDetail",
+                                    params: {
+                                      complaintId: notification.complaintId,
+                                      currentUser: this.state.user
+                                    }
+                                  });
+                                }}
+                              >
+                                <View style={styles.listItem}>
+                                  <View style={{ width: "95%" }} onPres>
+                                    <Text
+                                      style={{
+                                        fontSize: 16,
+                                        fontWeight: "600"
+                                      }}
+                                    >
+                                      {notification.msg}
+                                    </Text>
+                                  </View>
+                                </View>
+                              </TouchableOpacity>
+                            ) : null}
+                          </View>
+                        ))}
+                      </View>
+                    ) : (
+                      <View
+                        style={{
+                          flex: 1,
+                          justifyContent: "center",
+                          alignItems: "center",
+                          paddingTop: 30
+                        }}
+                      >
+                        <Text style={{ fontSize: 20, fontWeight: "600" }}>
+                          No Notifications
+                        </Text>
+                      </View>
+                    )}
                   </View>
                 )}
               </View>

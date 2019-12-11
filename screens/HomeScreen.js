@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   RefreshControl
 } from "react-native";
+import { AsyncStorage } from "react-native";
 import { HeaderButtons, Item } from "react-navigation-header-buttons";
 // import Toast from "react-native-simple-toast";
 import HeaderButton from "../components/HeaderButton";
@@ -23,8 +24,11 @@ import {
 } from "../services/complaintService";
 import Color from "../constants/Color";
 import NewHeaderButton from "../components/NewHeaderButton";
-import { Ionicons } from "@expo/vector-icons";
 import { getConfiguration } from "../services/configService";
+import config from "../config.json";
+import openSocket from "socket.io-client";
+
+const socket = openSocket(config.apiEndpoint);
 
 class HomeScreen extends Component {
   state = {
@@ -53,12 +57,13 @@ class HomeScreen extends Component {
       if (user.role === "assignee") {
         const { data } = await getAssigneeComplaints();
         console.log("Assignee", data.length);
-        const resolved = data.filter(
-          cmp =>
-            cmp.status === "closed - relief granted" ||
-            cmp.status === "closed - partial relief granted" ||
-            cmp.status === "closed - relief can't be granted"
-        );
+
+        await AsyncStorage.setItem("complaints", {
+          user: user,
+          complaints: data
+        });
+
+        const resolved = data.filter(cmp => cmp.status != "in-progress");
         const inprogress = data.filter(cmp => cmp.status === "in-progress");
         this.setState({ complaints: data });
         this.gettingComplaints(resolved, inprogress);
@@ -67,14 +72,9 @@ class HomeScreen extends Component {
       if (user.role === "complainer") {
         console.log("complainer");
         const { data } = await getComplaints();
-        const resolved = data.filter(
-          cmp =>
-            cmp.status === "closed - relief granted" ||
-            cmp.status === "closed - partial relief granted" ||
-            cmp.status === "closed - relief can't be granted"
-        );
+
+        const resolved = data.filter(cmp => cmp.status != "in-progress");
         const inprogress = data.filter(cmp => cmp.status === "in-progress");
-        // setComplaints(oldComplaints => [...oldComplaints, ...data]);
         this.setState({ complaints: data });
         this.gettingComplaints(resolved, inprogress);
         //
@@ -82,15 +82,10 @@ class HomeScreen extends Component {
       if (user.role === "admin") {
         const { data } = await getAdminComplaints();
         // console.log("admin", data.length);
-        const resolved = data.filter(
-          cmp =>
-            cmp.status === "closed - relief granted" ||
-            cmp.status === "closed - partial relief granted" ||
-            cmp.status === "closed - relief can't be granted"
-        );
+
+        const resolved = data.filter(cmp => cmp.status != "in-progress");
         const inprogress = data.filter(cmp => cmp.status === "in-progress");
         this.setState({ complaints: data });
-        // setComplaints(oldComplaints => [...oldComplaints, ...data]);
         this.gettingComplaints(resolved, inprogress);
         //
       }
@@ -106,14 +101,15 @@ class HomeScreen extends Component {
   };
 
   async componentDidMount() {
-    this.focusLitener = this.props.navigation.addListener("didFocus", () => {
-      this.setState({ count: this.state.count++ });
-    });
+    // this.focusLitener = this.props.navigation.addListener("didFocus", () => {
+    //   this.setState({ count: this.state.count++ });
+    // });
 
-    this.willFocusSub = this.props.navigation.addListener(
-      "willFocus",
-      this.getComplaintsAndStore
-    );
+    // this.willFocusSub = this.props.navigation.addListener(
+    //   "willFocus",
+    //   this.getComplaintsAndStore
+    // );
+    this.socketConnection();
 
     this.props.navigation.setParams({
       handleNewComplaintHeaderButton: this._handleNewComplaintHeaderButton
@@ -126,6 +122,32 @@ class HomeScreen extends Component {
   async componentWillUnmount() {
     this.willFocusSub.remove();
   }
+
+  // check socket connection
+  socketConnection = async () => {
+    try {
+      const user = await authService.getCurrentUser();
+      socket.on("complaints", data => {
+        if (data.notification.companyId == user.companyId) {
+          if (data.action === "new complaint") {
+            if (
+              (user._id == data.complaint.assignedTo._id ||
+                user._id == data.complaint.complainer._id) &&
+              user.companyId == data.notification.companyId
+            ) {
+              this.setState(prevState => {
+                const oldComplaints = [...prevState.complaints];
+                oldComplaints.push(data.complaint);
+                return { complaints: oldComplaints };
+              });
+            }
+          }
+        }
+      });
+    } catch (err) {
+      return Alert.alert("An UnExpected Error has occured.");
+    }
+  };
 
   gettingComplaints = async (resolved, inprogress) => {
     this.setState({

@@ -25,6 +25,9 @@ import LocationPicker from "../components/LocationPicker";
 import { getCurrentUser } from "../services/authService";
 import { getConfiguration } from "../services/configService";
 import { TouchableOpacity } from "react-native-gesture-handler";
+import { getLocations } from "../services/locationService";
+import LocationModal from "../components/locationModal";
+import CameraImgPicker from "../components/CameraImagePicker";
 
 class ComplaintFormScreen extends React.Component {
   state = {
@@ -32,15 +35,18 @@ class ComplaintFormScreen extends React.Component {
     location: "",
     details: "",
     categoryId: "",
+    locationId: "",
     longitude: "",
     latitude: "",
     selectedFile: null,
     categories: [],
+    locations: [],
     sentimentCategory: "",
 
     selectedCategory: "",
     selectedLocation: "",
     openCategoryModal: false,
+    openLocationModal: false,
     titleError: "",
     detailsError: "",
     locationError: "",
@@ -69,12 +75,19 @@ class ComplaintFormScreen extends React.Component {
     const user = await getCurrentUser();
     const { data: config } = await getConfiguration(user.companyId);
     const { data: cateogories } = await getCategories();
+    const { data: locations } = await getLocations();
+    console.log("locations", locations);
     const selectedCategory = cateogories.find(cate => cate.name === "General");
+    const selectedLocation = locations.find(cate => cate.name === "Other");
+
     this.setState({
       categories: cateogories,
+      locations: locations,
       configToken: config,
       selectedCategory,
-      categoryId: selectedCategory._id
+      selectedLocation,
+      categoryId: selectedCategory._id,
+      locationId: selectedLocation._id
     });
   };
 
@@ -89,9 +102,13 @@ class ComplaintFormScreen extends React.Component {
     this.setState({ openCategoryModal: true });
   };
 
+  openLocationModal = () => {
+    this.setState({ openLocationModal: true });
+  };
+
   doSubmit = async () => {
-    const { title, details, location, categoryId } = this.state;
-    if (!title || !details || !location || !categoryId) {
+    const { title, details, location, categoryId, locationId } = this.state;
+    if (!title || !details || !categoryId || !locationId) {
       return Alert.alert("Please fill all required inputs.");
     }
     if (this.state.configToken.isSeverity && !this.state.severity) {
@@ -111,6 +128,7 @@ class ComplaintFormScreen extends React.Component {
     data.append("details", this.state.details);
     data.append("location", this.state.location);
     data.append("categoryId", this.state.categoryId);
+    data.append("locationId", this.state.locationId);
     data.append("latitude", this.state.latitude);
     data.append("longitude", this.state.longitude);
     if (this.state.configToken.isSeverity) {
@@ -138,6 +156,12 @@ class ComplaintFormScreen extends React.Component {
     });
   };
 
+  closeLocationModal = () => {
+    this.setState({
+      openLocationModal: !this.state.openLocationModal
+    });
+  };
+
   handleImageTaken = async document => {
     if (!document.cancelled) this.setState({ selectedFile: document });
   };
@@ -155,7 +179,20 @@ class ComplaintFormScreen extends React.Component {
     }
   };
 
-  handleLocationTaken = async position => {
+  onLocationSelection = locationId => {
+    const locations = this.state.locations;
+    const location = locations.find(c => c._id === locationId);
+
+    if (location) {
+      this.setState({
+        // sentimentCategory: category,
+        selectedLocation: location,
+        locationId: locationId
+      });
+    }
+  };
+
+  handleGPSLocationTaken = async position => {
     this.setState({
       latitude: position.coords.latitude + "",
       longitude: position.coords.longitude + ""
@@ -170,10 +207,6 @@ class ComplaintFormScreen extends React.Component {
       sentimentCategory,
       openCategoryModal,
       categoryId,
-      titleError,
-      locationError,
-      detailsError,
-      categoryError,
       isLoading
     } = this.state;
 
@@ -190,6 +223,13 @@ class ComplaintFormScreen extends React.Component {
                 visible={openCategoryModal}
                 closeModal={this.closeModal}
                 onCategorySelection={this.onCategorySelection}
+              />
+            )}
+            {this.openLocationModal && (
+              <LocationModal
+                visible={this.state.openLocationModal}
+                closeModal={this.closeLocationModal}
+                onLocationSelection={this.onLocationSelection}
               />
             )}
             <Card title="Register New Complaint" style={styles.cardContainer}>
@@ -272,25 +312,24 @@ class ComplaintFormScreen extends React.Component {
                   }}
                 >
                   <Text style={{ color: "#a9a9a9" }}>Location</Text>
-                  {/* {this.state.selectedLocation ? ( */}
-                  <TouchableOpacity
-                    activeOpacity={0.9}
-                    style={{ ...styles.categoryRow, marginVertical: 10 }}
-                    onPress={this.openModal}
-                  >
-                    <Text style={{ fontSize: 18 }}>
-                      {/* {this.state.selectedCategory.name}{" "} */}
-                      CS Department
-                    </Text>
+                  {this.state.selectedLocation ? (
+                    <TouchableOpacity
+                      activeOpacity={0.9}
+                      style={{ ...styles.categoryRow, marginVertical: 10 }}
+                      onPress={this.openLocationModal}
+                    >
+                      <Text style={{ fontSize: 18 }}>
+                        {this.state.selectedLocation.name}
+                      </Text>
 
-                    <MaterialCommunityIcons
-                      name="pencil"
-                      size={15}
-                      color="black"
-                      onPress={this.openModal}
-                    />
-                  </TouchableOpacity>
-                  {/* ) : null} */}
+                      <MaterialCommunityIcons
+                        name="pencil"
+                        size={15}
+                        color="black"
+                        onPress={this.openLocationModal}
+                      />
+                    </TouchableOpacity>
+                  ) : null}
                 </View>
 
                 {/* location end */}
@@ -328,21 +367,33 @@ class ComplaintFormScreen extends React.Component {
 
                 <TextInput
                   style={styles.input}
-                  placeholder="Location *"
+                  placeholder="Location"
                   value={location}
                   onChangeText={text => this.setState({ location: text })}
                 />
 
-                <LocationPicker onLocationTaken={this.handleLocationTaken} />
+                <LocationPicker onLocationTaken={this.handleGPSLocationTaken} />
 
-                <ImgPicker onImageTaken={this.handleImageTaken}>
-                  <MainButton
-                    buttonContainer={{ backgroundColor: Color.primaryColor }}
-                  >
-                    Pick File {"  "}
-                    <AntDesign name="addfile" size={22} color="white" />
-                  </MainButton>
-                </ImgPicker>
+                <View>
+                  <ImgPicker onImageTaken={this.handleImageTaken}>
+                    <MainButton
+                      buttonContainer={{ backgroundColor: Color.primaryColor }}
+                    >
+                      Choose from Gallery {"  "}
+                      <AntDesign name="picture" size={22} color="white" />
+                    </MainButton>
+                  </ImgPicker>
+
+                  <CameraImgPicker onImageTaken={this.handleImageTaken}>
+                    <MainButton
+                      buttonContainer={{ backgroundColor: Color.accentColor }}
+                    >
+                      Take Photo {"  "}
+                      <AntDesign name="camera" size={22} color="white" />
+                    </MainButton>
+                  </CameraImgPicker>
+                </View>
+
                 {/* <Picker /> */}
 
                 <MainButton

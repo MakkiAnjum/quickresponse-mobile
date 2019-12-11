@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import {
   Button,
+  TouchableWithoutFeedback,
   View,
   Text,
   Image,
@@ -51,9 +52,9 @@ const LocationPicker = props => {
   return (
     <View style={styles.locationPicker}>
       <View style={{ position: "relative" }}>
-        <View>
+        <TouchableWithoutFeedback onPress={handleGetLocation}>
           <Image source={require("../assets/map.jpg")} style={styles.image} />
-        </View>
+        </TouchableWithoutFeedback>
         <View
           style={{
             position: "absolute",

@@ -22,6 +22,7 @@ import Color from "../constants/Color.js";
 import { YellowBox } from "react-native";
 import { FontAwesome, AntDesign } from "@expo/vector-icons";
 import ImgPicker from "../components/ImagePicker.js";
+import CameraImgPicker from "../components/CameraImagePicker.js";
 YellowBox.ignoreWarnings([
   "Unrecognized WebSocket connection option(s) `agent`, `perMessageDeflate`, `pfx`, `key`, `passphrase`, `cert`, `ca`, `ciphers`, `rejectUnauthorized`. Did you mean to put these under `headers`?"
 ]);
@@ -160,7 +161,7 @@ class ChatScreen extends React.Component {
                 <View
                   key={uuid()}
                   style={{
-                    padding: 5,
+                    padding: 8,
                     margin: 5,
                     alignSelf:
                       this.props.navigation.getParam("currentUser")._id ==
@@ -182,7 +183,7 @@ class ChatScreen extends React.Component {
                         message.sender
                           ? "white"
                           : "black",
-                      fontSize: 16
+                      fontSize: 18
                     }}
                   >
                     {message.messageBody.includes("cmp-") ? (
@@ -222,12 +223,17 @@ class ChatScreen extends React.Component {
             <ImgPicker onImageTaken={this.handleImageTaken}>
               <View style={{ paddingLeft: 8, paddingTop: 8 }}>
                 <AntDesign
-                  name="addfile"
+                  name="picture"
                   size={22}
                   color={Color.primaryColor}
                 />
               </View>
             </ImgPicker>
+            <CameraImgPicker onImageTaken={this.handleImageTaken}>
+              <View style={{ paddingLeft: 8, paddingTop: 8 }}>
+                <AntDesign name="camera" size={22} color={Color.primaryColor} />
+              </View>
+            </CameraImgPicker>
 
             <TouchableOpacity style={styles.sendBtn}>
               <Text style={{ color: "#fff" }} onPress={this.handleSend}>

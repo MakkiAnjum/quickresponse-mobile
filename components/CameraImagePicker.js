@@ -6,7 +6,7 @@ import * as Permissions from "expo-permissions";
 import * as FileSystem from "expo-file-system";
 import { TouchableOpacity } from "react-native-gesture-handler";
 
-const ImgPicker = props => {
+const CameraImgPicker = props => {
   const [pickedImage, setPickedImage] = useState();
 
   const verifyPermissions = async () => {
@@ -28,20 +28,10 @@ const ImgPicker = props => {
       return;
     }
 
-    let image = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
+    let image = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       base64: true
     });
-
-    console.log(image.uri);
-    // const filename = image.uri.split("/").pop();
-    // const newPath = FileSystem.documentDirectory + filename;
-
-    // FileSystem.readAsStringAsync(image.uri)
-    //   .then(res => console.log(res, "res"))
-    //   .catch(err => console.log(err, "err"));
-
-    // FileSystem.writeAsStringAsync(image.uri);
 
     setPickedImage(image);
     props.onImageTaken(image);
@@ -91,4 +81,4 @@ const styles = StyleSheet.create({
   }
 });
 
-export default ImgPicker;
+export default CameraImgPicker;

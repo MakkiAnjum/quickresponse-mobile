@@ -10,7 +10,6 @@ import {
   Alert
 } from "react-native";
 
-import { AntDesign } from "@expo/vector-icons";
 import { AsyncStorage } from "react-native";
 
 import MainButton from "../components/MainButton";

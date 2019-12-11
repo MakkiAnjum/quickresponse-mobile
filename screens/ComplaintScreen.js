@@ -9,7 +9,7 @@ import {
   Platform,
   ScrollView
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, AntDesign } from "@expo/vector-icons";
 import { HeaderButtons, Item } from "react-navigation-header-buttons";
 import HeaderButton from "../components/HeaderButton";
 import Color from "../constants/Color";
@@ -90,7 +90,7 @@ const ComplaintScreen = props => {
 
   return (
     <View style={styles.screen}>
-      <ScrollView>
+      <ScrollView onScrollEndDrag={() => console.log("i am ended")}>
         {isLoading && complaints.length != 0 && (
           <ActivityIndicator color={Color.primaryColor} />
         )}
@@ -225,6 +225,14 @@ const ComplaintScreen = props => {
             </Text>
           </View>
         )}
+        <View>
+          <AntDesign
+            name="reload1"
+            size={22}
+            color={Color.primaryColor}
+            onPress={() => console.log("i am pressed")}
+          />
+        </View>
       </ScrollView>
       {/* {renderFloatingButton()} */}
     </View>
