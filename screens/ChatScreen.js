@@ -10,7 +10,8 @@ import {
   Text,
   ScrollView,
   TextInput,
-  StyleSheet
+  StyleSheet,
+  ActivityIndicator
 } from "react-native";
 
 import config from "../config.json";
@@ -34,7 +35,8 @@ class ChatScreen extends React.Component {
     message: "",
     allMessages: [],
     selectedFile: null,
-    sender: ""
+    sender: "",
+    isLoading: false
   };
   willFocusSub = "";
   isActive = false;
@@ -62,11 +64,13 @@ class ChatScreen extends React.Component {
 
   getAllMessages = async () => {
     if (this.isActive) {
-      console.log("getAllMessages called");
+      // console.log("getAllMessages called");
       const data = {
         sender: this.state.sender,
         receiver: this.props.navigation.getParam("receiverId")
       };
+
+      this.setState({ isLoading: true });
 
       const { data: msgs } = await getAllMessages(data);
 
@@ -75,6 +79,7 @@ class ChatScreen extends React.Component {
       });
 
       this.setState({ allMessages: msgs });
+      this.setState({ isLoading: false });
       // console.log(msgs);
     }
     // this.scroll.current.scrollIntoView();
@@ -102,8 +107,10 @@ class ChatScreen extends React.Component {
   };
 
   handleImageTaken = async image => {
+    this.setState({ isLoading: true });
     if (!image.cancelled) {
       this.setState({ message: "attachment", selectedFile: image });
+      this.setState({ isLoading: false });
     }
   };
 
@@ -155,60 +162,66 @@ class ChatScreen extends React.Component {
     return (
       <View style={styles.container}>
         <ScrollView ref="scrollView">
-          {this.state.allMessages.length > 0 ? (
-            <View>
-              {this.state.allMessages.map(message => (
-                <View
-                  key={uuid()}
-                  style={{
-                    padding: 8,
-                    margin: 5,
-                    alignSelf:
-                      this.props.navigation.getParam("currentUser")._id ==
-                      message.sender
-                        ? "flex-end"
-                        : "flex-start",
-                    backgroundColor:
-                      this.props.navigation.getParam("currentUser")._id ==
-                      message.sender
-                        ? "#049cfc"
-                        : "#f4ecf4",
-                    borderRadius: 8
-                  }}
-                >
-                  <Text
-                    style={{
-                      color:
-                        this.props.navigation.getParam("currentUser")._id ==
-                        message.sender
-                          ? "white"
-                          : "black",
-                      fontSize: 18
-                    }}
-                  >
-                    {message.messageBody.includes("cmp-") ? (
-                      <FontAwesome
-                        name="file-text-o"
-                        size={22}
-                        color={
-                          this.props.navigation.getParam("currentUser")._id ==
-                          message.sender
-                            ? "white"
-                            : "black"
-                        }
-                        onPress={() => this._handleViewFile(message)}
-                      />
-                    ) : (
-                      <Text>{message.messageBody}</Text>
-                    )}
-                    {/* {message.messageBody} */}
-                  </Text>
-                </View>
-              ))}
-            </View>
+          {this.state.isLoading ? (
+            <ActivityIndicator color={Color.primaryColor} />
           ) : (
             <View>
-              <Text>No Previous chat found.</Text>
+              {this.state.allMessages.length > 0 ? (
+                <View>
+                  {this.state.allMessages.map(message => (
+                    <View
+                      key={uuid()}
+                      style={{
+                        padding: 8,
+                        margin: 5,
+                        alignSelf:
+                          this.props.navigation.getParam("currentUser")._id ==
+                          message.sender
+                            ? "flex-end"
+                            : "flex-start",
+                        backgroundColor:
+                          this.props.navigation.getParam("currentUser")._id ==
+                          message.sender
+                            ? "#049cfc"
+                            : "#f4ecf4",
+                        borderRadius: 8
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color:
+                            this.props.navigation.getParam("currentUser")._id ==
+                            message.sender
+                              ? "white"
+                              : "black",
+                          fontSize: 18
+                        }}
+                      >
+                        {message.messageBody.includes("cmp-") ? (
+                          <FontAwesome
+                            name="file-text-o"
+                            size={22}
+                            color={
+                              this.props.navigation.getParam("currentUser")
+                                ._id == message.sender
+                                ? "white"
+                                : "black"
+                            }
+                            onPress={() => this._handleViewFile(message)}
+                          />
+                        ) : (
+                          <Text>{message.messageBody}</Text>
+                        )}
+                        {/* {message.messageBody} */}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                <View>
+                  <Text>No Previous chat found.</Text>
+                </View>
+              )}
             </View>
           )}
         </ScrollView>

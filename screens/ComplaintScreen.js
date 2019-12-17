@@ -83,14 +83,13 @@ const ComplaintScreen = props => {
     setIsLoading(true);
     const allcomplaints = props.navigation.getParam("complaints");
     const reversed = allcomplaints.reverse();
-    console.log(reversed);
     setComplaints(oldComplaints => [...oldComplaints, ...reversed]);
     setIsLoading(false);
   }, []);
 
   return (
     <View style={styles.screen}>
-      <ScrollView onScrollEndDrag={() => console.log("i am ended")}>
+      <ScrollView>
         {isLoading && complaints.length != 0 && (
           <ActivityIndicator color={Color.primaryColor} />
         )}
@@ -225,14 +224,6 @@ const ComplaintScreen = props => {
             </Text>
           </View>
         )}
-        <View>
-          <AntDesign
-            name="reload1"
-            size={22}
-            color={Color.primaryColor}
-            onPress={() => console.log("i am pressed")}
-          />
-        </View>
       </ScrollView>
       {/* {renderFloatingButton()} */}
     </View>

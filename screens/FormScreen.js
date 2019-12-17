@@ -1,5 +1,6 @@
 import React from "react";
 import {
+  KeyboardAvoidingView,
   TextInput,
   ScrollView,
   View,
@@ -28,6 +29,7 @@ import { TouchableOpacity } from "react-native-gesture-handler";
 import { getLocations } from "../services/locationService";
 import LocationModal from "../components/locationModal";
 import CameraImgPicker from "../components/CameraImagePicker";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 class ComplaintFormScreen extends React.Component {
   state = {
@@ -47,16 +49,15 @@ class ComplaintFormScreen extends React.Component {
     selectedLocation: "",
     openCategoryModal: false,
     openLocationModal: false,
-    titleError: "",
-    detailsError: "",
-    locationError: "",
-    categoryError: "",
     configToken: "",
     severity: "",
-    isLoading: false
+    isLoading: false,
+    isLoadingCategory: false,
+    isLoadingLocation: false,
+    isConfirmed: false
   };
 
-  webFocusSubs = "";
+  willFocusSub = "";
 
   async componentDidMount() {
     this.getAllDetails();
@@ -74,9 +75,9 @@ class ComplaintFormScreen extends React.Component {
   getAllDetails = async () => {
     const user = await getCurrentUser();
     const { data: config } = await getConfiguration(user.companyId);
+    this.setState({ isLoadingCategory: true, isLoadingLocation: true });
     const { data: cateogories } = await getCategories();
     const { data: locations } = await getLocations();
-    console.log("locations", locations);
     const selectedCategory = cateogories.find(cate => cate.name === "General");
     const selectedLocation = locations.find(cate => cate.name === "Other");
 
@@ -87,7 +88,9 @@ class ComplaintFormScreen extends React.Component {
       selectedCategory,
       selectedLocation,
       categoryId: selectedCategory._id,
-      locationId: selectedLocation._id
+      locationId: selectedLocation._id,
+      isLoadingCategory: false,
+      isLoadingLocation: false
     });
   };
 
@@ -106,8 +109,8 @@ class ComplaintFormScreen extends React.Component {
     this.setState({ openLocationModal: true });
   };
 
-  doSubmit = async () => {
-    const { title, details, location, categoryId, locationId } = this.state;
+  handleConfirm = () => {
+    const { title, details, categoryId, locationId } = this.state;
     if (!title || !details || !categoryId || !locationId) {
       return Alert.alert("Please fill all required inputs.");
     }
@@ -122,7 +125,11 @@ class ComplaintFormScreen extends React.Component {
       return Alert.alert("Details must be atleast 30 characters.");
     }
 
-    this.setState({ isLoading: true });
+    this.setState({ isConfirmed: true });
+  };
+
+  doSubmit = async () => {
+    this.setState({ isLoading: true, isConfirmed: false });
     const data = new FormData();
     data.append("title", this.state.title);
     data.append("details", this.state.details);
@@ -211,46 +218,60 @@ class ComplaintFormScreen extends React.Component {
     } = this.state;
 
     return (
-      <ScrollView style={styles.screen}>
-        {isLoading ? (
-          <View style={styles.spinner}>
-            <ActivityIndicator color={Color.primaryColor} />
-          </View>
-        ) : (
-          <View>
-            {openCategoryModal && (
-              <CategoryModal
-                visible={openCategoryModal}
-                closeModal={this.closeModal}
-                onCategorySelection={this.onCategorySelection}
-              />
-            )}
-            {this.openLocationModal && (
-              <LocationModal
-                visible={this.state.openLocationModal}
-                closeModal={this.closeLocationModal}
-                onLocationSelection={this.onLocationSelection}
-              />
-            )}
-            <Card title="Register New Complaint" style={styles.cardContainer}>
-              <View>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Title *"
-                  value={title}
-                  onChangeText={text => this.setState({ title: text })}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior="padding"
+        keyboardVerticalOffset={100}
+      >
+        <ScrollView style={styles.screen}>
+          {this.state.isConfirmed ? (
+            <ConfirmDialog
+              visible={this.state.isConfirmed}
+              onCancelPress={() => this.setState({ isConfirmed: false })}
+              onConfirmPress={this.doSubmit}
+            >
+              You can't edit after registering
+            </ConfirmDialog>
+          ) : null}
+          {isLoading ? (
+            <View style={styles.spinner}>
+              <ActivityIndicator color={Color.primaryColor} />
+            </View>
+          ) : (
+            <View>
+              {openCategoryModal && (
+                <CategoryModal
+                  visible={openCategoryModal}
+                  closeModal={this.closeModal}
+                  onCategorySelection={this.onCategorySelection}
                 />
-
-                <TextInput
-                  placeholder="Details *"
-                  style={styles.detailInput}
-                  value={details}
-                  onChangeText={text => this.setState({ details: text })}
-                  multiline
-                  onBlur={this.handleOnDetailsBlur}
+              )}
+              {this.openLocationModal && (
+                <LocationModal
+                  visible={this.state.openLocationModal}
+                  closeModal={this.closeLocationModal}
+                  onLocationSelection={this.onLocationSelection}
                 />
+              )}
+              <Card title="Register New Complaint" style={styles.cardContainer}>
+                <View>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Title *"
+                    value={title}
+                    onChangeText={text => this.setState({ title: text })}
+                  />
 
-                {/* <View style={styles.categoryContainer}>
+                  <TextInput
+                    placeholder="Details *"
+                    style={styles.detailInput}
+                    value={details}
+                    onChangeText={text => this.setState({ details: text })}
+                    multiline
+                    onBlur={this.handleOnDetailsBlur}
+                  />
+
+                  {/* <View style={styles.categoryContainer}>
                   {sentimentCategory ? (
                     <View style={styles.categoryRow}>
                       <Text style={{ fontSize: 18 }}>
@@ -270,71 +291,6 @@ class ComplaintFormScreen extends React.Component {
                     </Text>
                   )}
                 </View> */}
-                <View
-                  style={{
-                    marginVertical: 10,
-                    borderColor: "#e4e4e4",
-                    borderWidth: 0.5,
-                    padding: 5,
-                    borderRadius: 10
-                  }}
-                >
-                  <Text style={{ color: "#a9a9a9" }}>Category</Text>
-                  {this.state.selectedCategory ? (
-                    <TouchableOpacity
-                      activeOpacity={0.9}
-                      style={{ ...styles.categoryRow, marginVertical: 10 }}
-                      onPress={this.openModal}
-                    >
-                      <Text style={{ fontSize: 18 }}>
-                        {this.state.selectedCategory.name}{" "}
-                      </Text>
-
-                      <MaterialCommunityIcons
-                        name="pencil"
-                        size={15}
-                        color="black"
-                        onPress={this.openModal}
-                      />
-                    </TouchableOpacity>
-                  ) : null}
-                </View>
-
-                {/* location */}
-
-                <View
-                  style={{
-                    marginVertical: 10,
-                    borderColor: "#e4e4e4",
-                    borderWidth: 0.5,
-                    padding: 5,
-                    borderRadius: 10
-                  }}
-                >
-                  <Text style={{ color: "#a9a9a9" }}>Location</Text>
-                  {this.state.selectedLocation ? (
-                    <TouchableOpacity
-                      activeOpacity={0.9}
-                      style={{ ...styles.categoryRow, marginVertical: 10 }}
-                      onPress={this.openLocationModal}
-                    >
-                      <Text style={{ fontSize: 18 }}>
-                        {this.state.selectedLocation.name}
-                      </Text>
-
-                      <MaterialCommunityIcons
-                        name="pencil"
-                        size={15}
-                        color="black"
-                        onPress={this.openLocationModal}
-                      />
-                    </TouchableOpacity>
-                  ) : null}
-                </View>
-
-                {/* location end */}
-
-                {this.state.configToken.isSeverity ? (
                   <View
                     style={{
                       marginVertical: 10,
@@ -344,69 +300,157 @@ class ComplaintFormScreen extends React.Component {
                       borderRadius: 10
                     }}
                   >
-                    <Text style={{ color: "#a9a9a9" }}>Severity</Text>
-                    <Picker
-                      selectedValue={this.state.severity}
-                      mode="dropdown"
-                      // style={{ height: 50, width: 100 }}
-                      onValueChange={(itemValue, itemIndex) =>
-                        this.setState({ severity: itemValue })
-                      }
+                    <Text style={{ color: "#a9a9a9" }}>Category</Text>
+                    {this.state.isLoadingCategory ? (
+                      <ActivityIndicator color={Color.primaryColor} />
+                    ) : (
+                      <View>
+                        {this.state.selectedCategory ? (
+                          <TouchableOpacity
+                            activeOpacity={0.9}
+                            style={{
+                              ...styles.categoryRow,
+                              marginVertical: 10
+                            }}
+                            onPress={this.openModal}
+                          >
+                            <Text style={{ fontSize: 18 }}>
+                              {this.state.selectedCategory.name}{" "}
+                            </Text>
+
+                            <MaterialCommunityIcons
+                              name="pencil"
+                              size={15}
+                              color="black"
+                              onPress={this.openModal}
+                            />
+                          </TouchableOpacity>
+                        ) : null}
+                      </View>
+                    )}
+                  </View>
+
+                  {/* location */}
+
+                  <View
+                    style={{
+                      marginVertical: 10,
+                      borderColor: "#e4e4e4",
+                      borderWidth: 0.5,
+                      padding: 5,
+                      borderRadius: 10
+                    }}
+                  >
+                    <Text style={{ color: "#a9a9a9" }}>Location</Text>
+                    {this.state.isLoadingLocation ? (
+                      <ActivityIndicator color={Color.primaryColor} />
+                    ) : (
+                      <View>
+                        {this.state.selectedLocation ? (
+                          <TouchableOpacity
+                            activeOpacity={0.9}
+                            style={{
+                              ...styles.categoryRow,
+                              marginVertical: 10
+                            }}
+                            onPress={this.openLocationModal}
+                          >
+                            <Text style={{ fontSize: 18 }}>
+                              {this.state.selectedLocation.name}
+                            </Text>
+
+                            <MaterialCommunityIcons
+                              name="pencil"
+                              size={15}
+                              color="black"
+                              onPress={this.openLocationModal}
+                            />
+                          </TouchableOpacity>
+                        ) : null}
+                      </View>
+                    )}
+                  </View>
+
+                  {/* location end */}
+
+                  {this.state.configToken.isSeverity ? (
+                    <View
+                      style={{
+                        marginVertical: 10,
+                        borderColor: "#e4e4e4",
+                        borderWidth: 0.5,
+                        padding: 5,
+                        borderRadius: 10
+                      }}
                     >
-                      {/* <Picker.Item
+                      <Text style={{ color: "#a9a9a9" }}>Severity</Text>
+                      <Picker
+                        selectedValue={this.state.severity}
+                        mode="dropdown"
+                        // style={{ height: 50, width: 100 }}
+                        onValueChange={(itemValue, itemIndex) =>
+                          this.setState({ severity: itemValue })
+                        }
+                      >
+                        {/* <Picker.Item
                         label="Choose Severity *"
                         value=""
                         enabled={false}
                       /> */}
-                      <Picker.Item label="Low" value="1" />
-                      <Picker.Item label="Medium" value="2" />
-                      <Picker.Item label="High" value="3" />
-                    </Picker>
+                        <Picker.Item label="Low" value="1" />
+                        <Picker.Item label="Medium" value="2" />
+                        <Picker.Item label="High" value="3" />
+                      </Picker>
+                    </View>
+                  ) : null}
+
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Location"
+                    value={location}
+                    onChangeText={text => this.setState({ location: text })}
+                  />
+
+                  <LocationPicker
+                    onLocationTaken={this.handleGPSLocationTaken}
+                  />
+
+                  <View>
+                    <ImgPicker onImageTaken={this.handleImageTaken}>
+                      <MainButton
+                        buttonContainer={{
+                          backgroundColor: Color.primaryColor
+                        }}
+                      >
+                        Choose from Gallery {"  "}
+                        <AntDesign name="picture" size={22} color="white" />
+                      </MainButton>
+                    </ImgPicker>
+
+                    <CameraImgPicker onImageTaken={this.handleImageTaken}>
+                      <MainButton
+                        buttonContainer={{ backgroundColor: Color.accentColor }}
+                      >
+                        Take Photo {"  "}
+                        <AntDesign name="camera" size={22} color="white" />
+                      </MainButton>
+                    </CameraImgPicker>
                   </View>
-                ) : null}
 
-                <TextInput
-                  style={styles.input}
-                  placeholder="Location"
-                  value={location}
-                  onChangeText={text => this.setState({ location: text })}
-                />
+                  {/* <Picker /> */}
 
-                <LocationPicker onLocationTaken={this.handleGPSLocationTaken} />
-
-                <View>
-                  <ImgPicker onImageTaken={this.handleImageTaken}>
-                    <MainButton
-                      buttonContainer={{ backgroundColor: Color.primaryColor }}
-                    >
-                      Choose from Gallery {"  "}
-                      <AntDesign name="picture" size={22} color="white" />
-                    </MainButton>
-                  </ImgPicker>
-
-                  <CameraImgPicker onImageTaken={this.handleImageTaken}>
-                    <MainButton
-                      buttonContainer={{ backgroundColor: Color.accentColor }}
-                    >
-                      Take Photo {"  "}
-                      <AntDesign name="camera" size={22} color="white" />
-                    </MainButton>
-                  </CameraImgPicker>
+                  <MainButton
+                    onPress={this.handleConfirm}
+                    buttonContainer={{ backgroundColor: Color.primaryColor }}
+                  >
+                    Register
+                  </MainButton>
                 </View>
-
-                {/* <Picker /> */}
-
-                <MainButton
-                  onPress={this.doSubmit}
-                  buttonContainer={{ backgroundColor: Color.primaryColor }}
-                >
-                  Register
-                </MainButton>
-              </View>
-            </Card>
-          </View>
-        )}
-      </ScrollView>
+              </Card>
+            </View>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
     );
   }
 }

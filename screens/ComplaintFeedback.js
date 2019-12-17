@@ -1,6 +1,13 @@
 import React, { useState } from "react";
 // import Toast from "react-native-simple-toast";
-import { View, Alert, Text, TextInput, StyleSheet, Button } from "react-native";
+import {
+  View,
+  Alert,
+  Text,
+  TextInput,
+  StyleSheet,
+  ActivityIndicator
+} from "react-native";
 import { ButtonGroup } from "react-native-elements";
 import Color from "../constants/Color";
 import { giveFeedback } from "../services/complaintService";
@@ -11,6 +18,7 @@ const ComplaintFeedback = props => {
   const [feedbackRemarks, setFeedbackRemarks] = useState("");
   const [feedbackTags, setFeedbackTags] = useState("");
   const [selectedIndex, setSelectedIndex] = useState();
+  const [isLoading, setIsLoading] = useState(false);
 
   const buttons = ["satisfied", "not satisfied"];
 
@@ -42,7 +50,9 @@ const ComplaintFeedback = props => {
       feedbackTags: feedbackTags
     };
 
+    setIsLoading(true);
     await giveFeedback(complaintId, data);
+    setIsLoading(false);
     // Toast.show("Thankyou for your feedback", Toast.LONG);
     return props.navigation.navigate("Complaints");
   };
@@ -51,6 +61,7 @@ const ComplaintFeedback = props => {
     <View style={{ margin: 10 }}>
       <Card title="Please Give your feedback" style={styles.cardContainer}>
         <View>
+          {isLoading ? <ActivityIndicator color={Color.primaryColor} /> : null}
           <TextInput
             placeholder="Remarks"
             style={styles.input}

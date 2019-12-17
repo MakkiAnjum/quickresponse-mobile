@@ -1,14 +1,6 @@
 import React, { Component } from "react";
 
-import {
-  View,
-  Text,
-  TextInput,
-  FlatList,
-  Button,
-  Modal,
-  StyleSheet
-} from "react-native";
+import { View, Text, ActivityIndicator, Modal, StyleSheet } from "react-native";
 import { Card } from "react-native-elements";
 import { getAllCompanies } from "../services/companyService";
 import Color from "../constants/Color";
@@ -16,12 +8,14 @@ import MainButton from "./MainButton";
 
 class Companies extends Component {
   state = {
-    companies: []
+    companies: [],
+    isLoading: false
   };
 
   async componentDidMount() {
+    this.setState({ isLoading: true });
     const { data } = await getAllCompanies();
-    this.setState({ companies: data });
+    this.setState({ companies: data, isLoading: false });
   }
 
   handleClick = companyId => {
@@ -29,7 +23,7 @@ class Companies extends Component {
   };
 
   render() {
-    const { companies } = this.state;
+    const { companies, isLoading } = this.state;
     const { visible, onModalClosed } = this.props;
 
     return (
@@ -37,19 +31,26 @@ class Companies extends Component {
         <View style={styles.container}>
           <Card title="Choose Company" style={styles.cardContainer}>
             <View>
-              {companies.length > 0 && (
+              {isLoading ? (
+                <ActivityIndicator color={Color.primaryColor} />
+              ) : (
                 <View>
-                  {companies.map(company => (
-                    <Text
-                      style={styles.categoryDetail}
-                      onPress={() => this.handleClick(company._id)}
-                      key={company._id}
-                    >
-                      {company.name}
-                    </Text>
-                  ))}
+                  {companies.length > 0 && (
+                    <View>
+                      {companies.map(company => (
+                        <Text
+                          style={styles.categoryDetail}
+                          onPress={() => this.handleClick(company._id)}
+                          key={company._id}
+                        >
+                          {company.name}
+                        </Text>
+                      ))}
+                    </View>
+                  )}
                 </View>
               )}
+
               <View
                 style={{
                   flexDirection: "row",

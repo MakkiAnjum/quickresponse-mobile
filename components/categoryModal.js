@@ -8,21 +8,24 @@ import {
 import { Card } from "react-native-elements";
 import Color from "../constants/Color";
 import MainButton from "./MainButton";
+import { ActivityIndicator } from "react-native-paper";
 // import Card from "./common/Card";
 
 class CategoryModal extends React.Component {
   state = {
     categories: [],
-    isLoading: true,
+    isLoading: false,
     isOpen: true,
     selectedCategory: ""
   };
 
   async componentDidMount() {
+    this.setState({ isLoading: true });
     try {
       const { data: categories } = await getCategoriesWithNoParent();
 
       this.setState({ categories });
+      this.setState({ isLoading: false });
     } catch (ex) {
       if (ex.response && ex.response.status === 400) {
         return Alert.alert(ex.response.data);
@@ -34,10 +37,13 @@ class CategoryModal extends React.Component {
   handleGoBack = async () => {
     console.log(this.state.selectedCategory);
     try {
+      this.setState({ isLoading: true });
+
       const { data: siblings } = await getSiblingsOf(
         this.state.selectedCategory
       );
       if (siblings && siblings[0]) this.setState({ categories: siblings });
+      this.setState({ isLoading: false });
     } catch (ex) {
       if (ex.response && ex.response.status === 400) {
         Alert.alert("Something wrong.");
@@ -49,6 +55,7 @@ class CategoryModal extends React.Component {
   handleClick = async categoryId => {
     this.setState({ selectedCategory: categoryId });
     console.log(categoryId);
+
     try {
       const { data: categories } = await getChildsOf(categoryId);
       console.log(categories);
@@ -74,20 +81,28 @@ class CategoryModal extends React.Component {
         <View style={styles.container}>
           <Card title="Choose Category" style={styles.cardContainer}>
             {/* <View style={styles.container}> */}
+
             <View>
-              {this.state.categories.length > 0 && (
+              {this.state.isLoading ? (
+                <ActivityIndicator color={Color.primaryColor} />
+              ) : (
                 <View>
-                  {this.state.categories.map(category => (
-                    <Text
-                      style={styles.categoryDetail}
-                      onPress={() => this.handleClick(category._id)}
-                      key={category._id}
-                    >
-                      {category.name}
-                    </Text>
-                  ))}
+                  {this.state.categories.length > 0 && (
+                    <View>
+                      {this.state.categories.map(category => (
+                        <Text
+                          style={styles.categoryDetail}
+                          onPress={() => this.handleClick(category._id)}
+                          key={category._id}
+                        >
+                          {category.name}
+                        </Text>
+                      ))}
+                    </View>
+                  )}
                 </View>
               )}
+
               <View
                 style={{
                   flexDirection: "row",

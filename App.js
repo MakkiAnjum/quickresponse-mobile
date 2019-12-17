@@ -9,10 +9,15 @@ import ComplaintsNavigator from "./navigation/ComplaintsNavigator";
 import authService from "./services/authService";
 import config from "./config.json";
 import openSocket from "socket.io-client";
-
 const socket = openSocket(config.apiEndpoint);
 
+import { init } from "./helpers/db";
+
 useScreens();
+
+init()
+  .then(() => console.log("Done"))
+  .catch(err => console.log("Err", err));
 
 const fetchFonts = () => {
   return Font.loadAsync({
@@ -33,6 +38,7 @@ export default class App extends React.Component {
     });
 
     socket.on("complaints", data => {
+      console.log(user.companyId, "user.companyId");
       if (data.notification.companyId == user.companyId) {
         if (data.action === "new complaint") {
           if (

@@ -7,7 +7,8 @@ import {
   Image,
   Text,
   ScrollView,
-  StyleSheet
+  StyleSheet,
+  KeyboardAvoidingView
 } from "react-native";
 import { HeaderButtons, Item } from "react-navigation-header-buttons";
 
@@ -186,132 +187,141 @@ class ProfileScreen extends React.Component {
   render() {
     const { user, isLoading, name, email, phone } = this.state;
     return (
-      <View style={styles.screen}>
-        <Card style={styles.cardContainer}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior="padding"
+        keyboardVerticalOffset={100}
+      >
+        <ScrollView style={styles.screen}>
           <View>
-            {isLoading ? (
-              <ActivityIndicator color={Color.primaryColor} />
-            ) : (
+            <Card style={styles.cardContainer}>
               <View>
-                {user ? (
+                {isLoading ? (
+                  <ActivityIndicator color={Color.primaryColor} />
+                ) : (
                   <View>
-                    <View
-                      style={{
-                        height: 150,
-                        marginTop: 20,
-                        backgroundColor: "white",
-                        flexDirection: "row",
-                        justifyContent: "space-evenly",
-                        alignItems: "center"
-                      }}
-                    >
+                    {user ? (
                       <View>
-                        {this.state.profilePictureBase64 ? (
-                          <Image
-                            source={{
-                              uri: `data:image/png;base64,${this.state.profilePictureBase64}`
-                            }}
-                            style={{
-                              height: 120,
-                              width: 120,
-                              borderRadius: 60
-                            }}
-                          />
-                        ) : (
-                          <Image
-                            source={require("../assets/userprofile.jpg")}
-                            style={{
-                              height: 120,
-                              width: 120,
-                              borderRadius: 60
-                            }}
-                          />
-                        )}
-                      </View>
-                      <View>
-                        <TouchableWithoutFeedback
-                          onPress={this.handleRemoveProfilePicture}
+                        <View
+                          style={{
+                            height: 150,
+                            marginTop: 20,
+                            backgroundColor: "white",
+                            flexDirection: "row",
+                            justifyContent: "space-evenly",
+                            alignItems: "center"
+                          }}
                         >
-                          <Entypo
-                            name="circle-with-cross"
-                            size={22}
-                            color={Color.primaryColor}
-                          />
-                        </TouchableWithoutFeedback>
-                        <ImgPicker onImageTaken={this.handleImageTaken}>
-                          <View style={{ paddingVertical: 5 }}>
-                            <Foundation
-                              name="pencil"
-                              size={22}
-                              color={Color.primaryColor}
-                            />
+                          <View>
+                            {this.state.profilePictureBase64 ? (
+                              <Image
+                                source={{
+                                  uri: `data:image/png;base64,${this.state.profilePictureBase64}`
+                                }}
+                                style={{
+                                  height: 120,
+                                  width: 120,
+                                  borderRadius: 60
+                                }}
+                              />
+                            ) : (
+                              <Image
+                                source={require("../assets/userprofile.jpg")}
+                                style={{
+                                  height: 120,
+                                  width: 120,
+                                  borderRadius: 60
+                                }}
+                              />
+                            )}
                           </View>
-                        </ImgPicker>
-                      </View>
-                    </View>
-                    <TextInput
-                      style={styles.input}
-                      value={name}
-                      onChangeText={text => this.setState({ name: text })}
-                      autoFocus
-                    />
+                          <View>
+                            <TouchableWithoutFeedback
+                              onPress={this.handleRemoveProfilePicture}
+                            >
+                              <Entypo
+                                name="circle-with-cross"
+                                size={22}
+                                color={Color.primaryColor}
+                              />
+                            </TouchableWithoutFeedback>
+                            <ImgPicker onImageTaken={this.handleImageTaken}>
+                              <View style={{ paddingVertical: 5 }}>
+                                <Foundation
+                                  name="pencil"
+                                  size={22}
+                                  color={Color.primaryColor}
+                                />
+                              </View>
+                            </ImgPicker>
+                          </View>
+                        </View>
+                        <TextInput
+                          style={styles.input}
+                          value={name}
+                          onChangeText={text => this.setState({ name: text })}
+                        />
 
-                    <TextInput
-                      style={styles.input}
-                      value={email}
-                      onChangeText={text => this.setState({ email: text })}
-                    />
+                        <TextInput
+                          style={styles.input}
+                          value={email}
+                          onChangeText={text => this.setState({ email: text })}
+                        />
 
-                    <TextInput
-                      style={styles.input}
-                      value={phone}
-                      onChangeText={text => this.setState({ phone: text })}
-                    />
+                        <TextInput
+                          style={styles.input}
+                          value={phone}
+                          onChangeText={text => this.setState({ phone: text })}
+                        />
 
-                    <View style={{ marginVertical: 10 }}>
-                      {user.role === "assignee" ? (
-                        <View>
-                          {this.state.responsibilities.length > 0 ? (
+                        <View style={{ marginVertical: 10 }}>
+                          {user.role === "assignee" ? (
                             <View>
-                              <Text style={{ fontSize: 18, fontWeight: "600" }}>
-                                Assignee Responsibilities
-                              </Text>
-                              <ScrollView>
-                                {this.state.responsibilities.map(
-                                  responsibility => (
-                                    <View
-                                      key={responsibility._id}
-                                      style={{
-                                        backgroundColor: "#f0f0f0",
-                                        padding: 10,
-                                        margin: 5,
-                                        width: "100%"
-                                      }}
-                                    >
-                                      <Text>{responsibility.name}</Text>
-                                    </View>
-                                  )
-                                )}
-                              </ScrollView>
+                              {this.state.responsibilities.length > 0 ? (
+                                <View>
+                                  <Text
+                                    style={{ fontSize: 18, fontWeight: "600" }}
+                                  >
+                                    Assignee Responsibilities
+                                  </Text>
+                                  <ScrollView>
+                                    {this.state.responsibilities.map(
+                                      responsibility => (
+                                        <View
+                                          key={responsibility._id}
+                                          style={{
+                                            backgroundColor: "#f0f0f0",
+                                            padding: 10,
+                                            margin: 5,
+                                            width: "100%"
+                                          }}
+                                        >
+                                          <Text>{responsibility.name}</Text>
+                                        </View>
+                                      )
+                                    )}
+                                  </ScrollView>
+                                </View>
+                              ) : null}
                             </View>
                           ) : null}
                         </View>
-                      ) : null}
-                    </View>
+                      </View>
+                    ) : null}
                   </View>
-                ) : null}
-              </View>
-            )}
+                )}
 
-            <MainButton
-              buttonContainer={{ backgroundColor: Color.primaryColor }}
-              onPress={this.handleProfileUpdate}
-            >
-              Update
-            </MainButton>
+                <MainButton
+                  buttonContainer={{ backgroundColor: Color.primaryColor }}
+                  onPress={this.handleProfileUpdate}
+                >
+                  Update
+                </MainButton>
+              </View>
+            </Card>
           </View>
-        </Card>
-      </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     );
   }
 }

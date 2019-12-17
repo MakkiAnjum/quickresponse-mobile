@@ -3,6 +3,8 @@ import {
   View,
   Image,
   Button,
+  ScrollView,
+  KeyboardAvoidingView,
   StyleSheet,
   TextInput,
   Alert
@@ -47,55 +49,69 @@ class ResetPassword extends Component {
   render() {
     const { confirmNewPassword, newPassword, currentPassword } = this.state;
     return (
-      <View style={styles.screen}>
-        <Card style={styles.cardContainer}>
-          <View>
-            <View style={{ justifyContent: "center", alignItems: "center" }}>
-              <TextInput
-                placeholder="Current password..."
-                style={styles.input}
-                value={currentPassword}
-                onChangeText={text => this.setState({ currentPassword: text })}
-                secureTextEntry={true}
-              />
-              <TextInput
-                placeholder="New password..."
-                style={styles.input}
-                value={newPassword}
-                onChangeText={text => this.setState({ newPassword: text })}
-                secureTextEntry={true}
-              />
-              <TextInput
-                placeholder="Confirm new password..."
-                style={styles.input}
-                value={confirmNewPassword}
-                onChangeText={text =>
-                  this.setState({ confirmNewPassword: text })
-                }
-                secureTextEntry={true}
-              />
-            </View>
-            <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
-              <View style={{ paddingRight: 5 }}>
-                <MainButton
-                  buttonContainer={{ backgroundColor: Color.primaryColor }}
-                  onPress={() => this.props.navigation.navigate("Home")}
-                >
-                  Cancel
-                </MainButton>
-              </View>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior="padding"
+        keyboardVerticalOffset={100}
+      >
+        <ScrollView style={styles.screen}>
+          <View style={styles.view}>
+            <Card style={styles.cardContainer}>
               <View>
-                <MainButton
-                  buttonContainer={{ backgroundColor: Color.accentColor }}
-                  onPress={this.handlePasswordReset}
+                <View
+                  style={{ justifyContent: "center", alignItems: "center" }}
                 >
-                  Reset
-                </MainButton>
+                  <TextInput
+                    placeholder="Current password..."
+                    style={styles.input}
+                    value={currentPassword}
+                    onChangeText={text =>
+                      this.setState({ currentPassword: text })
+                    }
+                    secureTextEntry={true}
+                  />
+                  <TextInput
+                    placeholder="New password..."
+                    style={styles.input}
+                    value={newPassword}
+                    onChangeText={text => this.setState({ newPassword: text })}
+                    secureTextEntry={true}
+                  />
+                  <TextInput
+                    placeholder="Confirm new password..."
+                    style={styles.input}
+                    value={confirmNewPassword}
+                    onChangeText={text =>
+                      this.setState({ confirmNewPassword: text })
+                    }
+                    secureTextEntry={true}
+                  />
+                </View>
+                <View
+                  style={{ flexDirection: "row", justifyContent: "flex-end" }}
+                >
+                  <View style={{ paddingRight: 5 }}>
+                    <MainButton
+                      buttonContainer={{ backgroundColor: Color.primaryColor }}
+                      onPress={() => this.props.navigation.navigate("Home")}
+                    >
+                      Cancel
+                    </MainButton>
+                  </View>
+                  <View>
+                    <MainButton
+                      buttonContainer={{ backgroundColor: Color.accentColor }}
+                      onPress={this.handlePasswordReset}
+                    >
+                      Reset
+                    </MainButton>
+                  </View>
+                </View>
               </View>
-            </View>
+            </Card>
           </View>
-        </Card>
-      </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     );
   }
 }
@@ -109,9 +125,12 @@ ResetPassword.navigationOptions = navData => {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+
     backgroundColor: "#f8f8f8"
+  },
+  view: {
+    justifyContent: "center",
+    alignItems: "center"
   },
   cardContainer: {
     backgroundColor: "white",

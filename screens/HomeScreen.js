@@ -27,6 +27,11 @@ import NewHeaderButton from "../components/NewHeaderButton";
 import { getConfiguration } from "../services/configService";
 import config from "../config.json";
 import openSocket from "socket.io-client";
+import {
+  insertComplaint,
+  fetchComplaint,
+  insertManyComplaint
+} from "../helpers/db";
 
 const socket = openSocket(config.apiEndpoint);
 
@@ -58,11 +63,6 @@ class HomeScreen extends Component {
         const { data } = await getAssigneeComplaints();
         console.log("Assignee", data.length);
 
-        await AsyncStorage.setItem("complaints", {
-          user: user,
-          complaints: data
-        });
-
         const resolved = data.filter(cmp => cmp.status != "in-progress");
         const inprogress = data.filter(cmp => cmp.status === "in-progress");
         this.setState({ complaints: data });
@@ -72,6 +72,20 @@ class HomeScreen extends Component {
       if (user.role === "complainer") {
         console.log("complainer");
         const { data } = await getComplaints();
+
+        // for (const complaint of data) {
+        //   const result = await insertComplaint(
+        //     complaint._id,
+        //     complaint.title,
+        //     complaint.status,
+        //     complaint.complainer,
+        //     complaint.assignedTo,
+        //     complaint.onModel,
+        //     complaint.companyId,
+        //     complaint.timeStamp
+        //   );
+        //   console.log(result, "result");
+        // }
 
         const resolved = data.filter(cmp => cmp.status != "in-progress");
         const inprogress = data.filter(cmp => cmp.status === "in-progress");
@@ -101,14 +115,6 @@ class HomeScreen extends Component {
   };
 
   async componentDidMount() {
-    // this.focusLitener = this.props.navigation.addListener("didFocus", () => {
-    //   this.setState({ count: this.state.count++ });
-    // });
-
-    // this.willFocusSub = this.props.navigation.addListener(
-    //   "willFocus",
-    //   this.getComplaintsAndStore
-    // );
     this.socketConnection();
 
     this.props.navigation.setParams({
@@ -117,11 +123,39 @@ class HomeScreen extends Component {
     this.setState({ isRefreshing: true });
     this.getComplaintsAndStore();
     this.setState({ isRefreshing: false });
+    // this.focusLitener = this.props.navigation.addListener("didFocus", () => {
+    //   this.setState({ count: this.state.count++ });
+    // });
+
+    // this.willFocusSub = this.props.navigation.addListener(
+    //   "willFocus",
+    //   this.getComplaintsAndStore
+    // );
+
+    // const result = await insertComplaint(
+    //   "testing 2",
+    //   "jkasndkas 2",
+    //   "asklndalk 2",
+    //   "0",
+    //   "1",
+    //   "closed",
+    //   "low",
+    //   "asda",
+    //   "asdas"
+    // );
+
+    // console.log(result, "result");
+
+    // const result = await fetchComplaint();
+    // console.log(result.rows._array, "reusl from SQLITE");
+
+    // const result = await insertManyComplaint(this.state.complaints);
+    // console.log(result, "result from as");
   }
 
-  async componentWillUnmount() {
-    this.willFocusSub.remove();
-  }
+  // async componentWillUnmount() {
+  //   this.willFocusSub.remove();
+  // }
 
   // check socket connection
   socketConnection = async () => {
@@ -156,9 +190,9 @@ class HomeScreen extends Component {
     });
   };
 
-  componentWillUnmount() {
-    this.focusLitener.remove();
-  }
+  // componentWillUnmount() {
+  //   this.focusLitener.remove();
+  // }
 
   _handleNewComplaintHeaderButton = async () => {
     const user = await authService.getCurrentUser();
@@ -301,7 +335,7 @@ class HomeScreen extends Component {
               <ActivityIndicator color={Color.primaryColor} />
             </View>
           )}
-          {this.state.complaints.length ? (
+          {true ? (
             <DisplayCard
               totalComplaints={this.state.complaints}
               inprogress={this.state.inprogress}
@@ -316,21 +350,9 @@ class HomeScreen extends Component {
               delayed={this.state.delayedComplaints}
               onDelayedPress={this.handleDelayedPress}
             />
-          ) : // <DisplayCard
-          //   totalComplaints={this.state.complaints}
-          //   inprogress={this.state.inprogress}
-          //   resolved={this.state.resolved}
-          //   onPress={this.navigateToAllComplaints}
-          //   onInProgressPress={this.handleInProgressPress}
-          //   onResolvedPress={this.handleResolvedPress}
-          //   positiveFeedback={this.state.positiveFeedbackComplaints}
-          //   onPositiveFeedbackPress={this.handlePositiveFeedbackPress}
-          //   negativeFeedback={this.state.negativeFeedbackComplaints}
-          //   onNegativeFeedbackPress={this.handleNegativeFeedbackPress}
-          //   delayed={this.state.delayedComplaints}
-          //   onDelayedPress={this.handleDelayedPress}
-          // />
-          null}
+          ) : (
+            <Text>There are nocomplaint</Text>
+          )}
         </ScrollView>
         {/* {renderFloatingButton()} */}
       </SafeAreaView>

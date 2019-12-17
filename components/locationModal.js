@@ -10,21 +10,24 @@ import {
 import { Card } from "react-native-elements";
 import Color from "../constants/Color";
 import MainButton from "./MainButton";
+import { ActivityIndicator } from "react-native-paper";
 // import Card from "./common/Card";
 
 class LocationModal extends React.Component {
   state = {
     locations: [],
-    isLoading: true,
+    isLoading: false,
     isOpen: true,
     selectedLocation: ""
   };
 
   async componentDidMount() {
+    this.setState({ isLoading: true });
     try {
       const { data: locations } = await getlocationsWithNoParent();
 
       this.setState({ locations });
+      this.setState({ isLoading: false });
     } catch (ex) {
       if (ex.response && ex.response.status === 400) {
         return Alert.alert(ex.response.data);
@@ -35,12 +38,14 @@ class LocationModal extends React.Component {
   // handle category go back
   handleGoBack = async () => {
     console.log(this.state.selectedLocation);
+    this.setState({ isLoading: true });
     try {
       const { data: siblings } = await getSiblingsOf(
         this.state.selectedLocation
       );
       console.log("siblings", siblings);
       if (siblings && siblings[0]) this.setState({ locations: siblings });
+      this.setState({ isLoading: false });
     } catch (ex) {
       if (ex.response && ex.response.status === 400) {
         Alert.alert("Something wrong.");
@@ -79,19 +84,26 @@ class LocationModal extends React.Component {
           <Card title="Choose Location" style={styles.cardContainer}>
             {/* <View style={styles.container}> */}
             <View>
-              {this.state.locations.length > 0 && (
+              {this.state.isLoading ? (
+                <ActivityIndicator color={Color.primaryColor} />
+              ) : (
                 <View>
-                  {this.state.locations.map(category => (
-                    <Text
-                      style={styles.categoryDetail}
-                      onPress={() => this.handleClick(category._id)}
-                      key={category._id}
-                    >
-                      {category.name}
-                    </Text>
-                  ))}
+                  {this.state.locations.length > 0 && (
+                    <View>
+                      {this.state.locations.map(category => (
+                        <Text
+                          style={styles.categoryDetail}
+                          onPress={() => this.handleClick(category._id)}
+                          key={category._id}
+                        >
+                          {category.name}
+                        </Text>
+                      ))}
+                    </View>
+                  )}
                 </View>
               )}
+
               <View
                 style={{
                   flexDirection: "row",

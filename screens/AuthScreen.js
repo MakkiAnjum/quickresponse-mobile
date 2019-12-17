@@ -5,8 +5,7 @@ import {
   ScrollView,
   SafeAreaView,
   StyleSheet,
-  Button,
-  KeyboardAvoidingView,
+  ActivityIndicator,
   Alert
 } from "react-native";
 
@@ -21,6 +20,7 @@ import Companies from "../components/companies";
 import { getConfiguration } from "../services/configService";
 import { TextInput } from "react-native-paper";
 import LinkButton from "../components/LinkButton";
+import Color from "../constants/Color";
 
 const AuthScreen = props => {
   const [email, setEmail] = useState("");
@@ -30,6 +30,7 @@ const AuthScreen = props => {
   const [displayCompanyModal, setDisplayCompanyModal] = useState(false);
   const [configToken, setConfigToken] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     retrieveInfo();
@@ -64,6 +65,8 @@ const AuthScreen = props => {
       return Alert.alert("Please choose your role.");
     }
 
+    setIsLoading(true);
+
     try {
       const { headers } = await authService.login(
         email.trim().toLowerCase(),
@@ -78,7 +81,9 @@ const AuthScreen = props => {
             http.setJwt(token);
           })
           .catch(err => console.log("Err"));
-        console.log("in asc");
+
+        setIsLoading(false);
+
         return props.navigation.navigate({
           routeName: "Home"
         });
@@ -86,6 +91,7 @@ const AuthScreen = props => {
     } catch (ex) {
       if (ex.response && ex.response.status === 400) {
         Alert.alert("Login Error", ex.response.data);
+        setIsLoading(false);
       }
     }
   };
@@ -95,7 +101,6 @@ const AuthScreen = props => {
   };
 
   const handleCompany = companyId => {
-    console.log(companyId);
     setDisplayCompanyModal(false);
     setCompanyId(companyId);
   };
@@ -104,13 +109,10 @@ const AuthScreen = props => {
     setDisplayCompanyModal(true);
   };
 
-  const HandleForgetPassword = async () => {
-    console.log("HandleForgetPassword");
-  };
-
   return (
     // <KeyboardAvoidingView behavior="position">
     // <View>
+
     <View style={styles.screen}>
       {displayCompanyModal && (
         <Companies
@@ -180,8 +182,11 @@ const AuthScreen = props => {
                 buttonContainer={{ backgroundColor: Colors.primaryColor }}
                 onPress={Authenticate}
               >
-                Login
+                Login{" "}
               </MainButton>
+              {isLoading ? (
+                <ActivityIndicator color={Color.primaryColor} />
+              ) : null}
             </View>
           </View>
           <View
@@ -220,8 +225,6 @@ const AuthScreen = props => {
         </View>
       </Card>
     </View>
-    /* </ScrollView> */
-    // </KeyboardAvoidingView>
   );
 };
 

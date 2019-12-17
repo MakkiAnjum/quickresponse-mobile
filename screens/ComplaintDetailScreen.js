@@ -33,6 +33,7 @@ import { getCurrentUser } from "../services/authService";
 import Card from "../components/common/Card";
 import { getConfiguration } from "../services/configService";
 import config from "../config.json";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 class ComplaintDetailScreen extends React.Component {
   state = {
@@ -43,7 +44,10 @@ class ComplaintDetailScreen extends React.Component {
     user: "",
     date: "",
     isLoading: false,
-    configToken: ""
+    configToken: "",
+    isDropConfirmation: false,
+    isSpamConfirmation: false,
+    isReopenConfirmation: false
   };
 
   willFocusSub = "";
@@ -159,6 +163,7 @@ class ComplaintDetailScreen extends React.Component {
 
   // dropResponsibility
   drop = async () => {
+    this.setState({ isDropConfirmation: false });
     try {
       await dropResponsibility(complaint._id);
       return this.props.navigation.navigate("Home");
@@ -170,8 +175,17 @@ class ComplaintDetailScreen extends React.Component {
     }
   };
 
+  handleSpam = () => {
+    this.setState({ isSpamConfirmation: true });
+  };
+
+  handleDrop = () => {
+    this.setState({ isDropConfirmation: true });
+  };
+
   // mark spam
   spam = async () => {
+    this.setState({ isSpamConfirmation: false });
     try {
       await markSpam(this.state.complaint._id, true);
       Alert.alert("Complaint is successfullt signed as spam.");
@@ -184,9 +198,13 @@ class ComplaintDetailScreen extends React.Component {
     }
   };
 
+  handleReopenDialog = () => {
+    this.setState({ isReopenConfirmation: true });
+  };
+
   // handleReOpen
   handleReOpen = async complaintId => {
-    this.setState({ isLoading: true });
+    this.setState({ isReopenConfirmation: false, isLoading: true });
 
     try {
       const { data: complaint } = await reOpen(complaintId);
@@ -208,12 +226,31 @@ class ComplaintDetailScreen extends React.Component {
       isLoading,
       remarks,
       statusValue,
-      user
+      user,
+      isDropConfirmation,
+      isSpamConfirmation,
+      isReopenConfirmation
     } = this.state;
 
     return (
       <View style={styles.screen}>
         <ScrollView>
+          {isSpamConfirmation ? (
+            <ConfirmDialog
+              visible={isSpamConfirmation}
+              onCancelPress={() => this.setState({ isSpamConfirmation: false })}
+              onConfirmPress={this.spam}
+            >
+              It will remove complaint from Complaints list and add in Spam List
+            </ConfirmDialog>
+          ) : null}
+          {isDropConfirmation ? (
+            <ConfirmDialog
+              visible={isDropConfirmation}
+              onCancelPress={() => this.setState({ isDropConfirmation: false })}
+              onConfirmPress={this.drop}
+            />
+          ) : null}
           <Card title="Complaint Detail" style={styles.cardContainer}>
             <View>
               {isLoading ? (
@@ -222,6 +259,17 @@ class ComplaintDetailScreen extends React.Component {
                 <View>
                   {complaint ? (
                     <View>
+                      {isReopenConfirmation ? (
+                        <ConfirmDialog
+                          visible={isReopenConfirmation}
+                          onCancelPress={() =>
+                            this.setState({ isReopenConfirmation: false })
+                          }
+                          onConfirmPress={() =>
+                            this.handleReOpen(complaint._id)
+                          }
+                        />
+                      ) : null}
                       <Card style={styles.cardContainer2}>
                         <View>
                           <Text style={{ ...styles.label, color: "white" }}>
@@ -319,15 +367,18 @@ class ComplaintDetailScreen extends React.Component {
 
                         {/* remarks */}
 
-                        <View style={styles.container}>
-                          <View>
-                            <Text style={styles.label}>Location</Text>
-                          </View>
+                        {complaint.location ? (
+                          <View style={styles.container}>
+                            <View>
+                              <Text style={styles.label}>Location Details</Text>
+                            </View>
 
-                          <View>
-                            <Text>{complaint.location}</Text>
+                            <View>
+                              <Text>{complaint.location}</Text>
+                            </View>
                           </View>
-                        </View>
+                        ) : null}
+
                         <View style={styles.container}>
                           <View>
                             <Text style={styles.label}>Assigned To</Text>
@@ -339,6 +390,19 @@ class ComplaintDetailScreen extends React.Component {
                             </View>
                           )}
                         </View>
+                        {user.role === "assignee" ? (
+                          <View style={styles.container}>
+                            <View>
+                              <Text style={styles.label}>Complainer</Text>
+                            </View>
+
+                            {complaint.complainer && (
+                              <View>
+                                <Text>{complaint.complainer.name}</Text>
+                              </View>
+                            )}
+                          </View>
+                        ) : null}
 
                         <View style={styles.container}>
                           <View>
@@ -351,6 +415,19 @@ class ComplaintDetailScreen extends React.Component {
                             </View>
                           )}
                         </View>
+
+                        <View style={styles.container}>
+                          <View>
+                            <Text style={styles.label}>Location</Text>
+                          </View>
+
+                          {complaint.locationTag && (
+                            <View>
+                              <Text>{complaint.locationTag.name}</Text>
+                            </View>
+                          )}
+                        </View>
+
                         <View style={styles.container}>
                           <View>
                             <Text style={styles.label}>Details</Text>
@@ -537,11 +614,9 @@ class ComplaintDetailScreen extends React.Component {
                                   buttonContainer={{
                                     backgroundColor: Color.accentColor
                                   }}
-                                  onPress={() =>
-                                    this.handleReOpen(complaint._id)
-                                  }
+                                  onPress={this.handleReopenDialog}
                                 >
-                                  Re-open Complaint{" "}
+                                  Re-open{" "}
                                   <Ionicons
                                     name="ios-open"
                                     size={24}
@@ -567,17 +642,22 @@ class ComplaintDetailScreen extends React.Component {
                                   buttonContainer={{
                                     backgroundColor: Color.primaryColor
                                   }}
-                                  onPress={this.drop}
+                                  onPress={this.handleDrop}
                                 >
-                                  Drop Responsibility
+                                  Drop{" "}
+                                  <Ionicons
+                                    name="md-exit"
+                                    size={22}
+                                    color="white"
+                                  />
                                 </MainButton>
                                 <MainButton
                                   buttonContainer={{
                                     backgroundColor: Color.accentColor
                                   }}
-                                  onPress={this.spam}
+                                  onPress={this.handleSpam}
                                 >
-                                  Mark as Spam{" "}
+                                  Spam{" "}
                                   <Entypo
                                     name="trash"
                                     size={22}
