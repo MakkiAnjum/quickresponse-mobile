@@ -55,13 +55,10 @@ export const insertComplaint = (
   companyId,
   timeStamp
 ) => {
-  console.log("complainer", complainer);
-  console.log("assignedTo", assignedTo);
-  console.log("companyId", companyId);
   const promise = new Promise((resolve, reject) => {
     db.transaction(tx => {
       tx.executeSql(
-        "INSERT INTO complaints (id,title,status, complainer, assignedTo, onModel, companyId, timeStamp) VALUES(?,?,?,?,?,?,?,?)",
+        "INSERT INTO complaints (id, title, status, complainer, assignedTo, onModel, companyId, timeStamp) VALUES(?,?,?,?,?,?,?,?)",
         [
           id,
           title,
@@ -88,9 +85,9 @@ export const insertComplaint = (
 
 // INSERT new complaint array
 export const insertManyComplaint = complaints => {
-  for (const complaint of complaints) {
-    const promise = new Promise((resolve, reject) => {
-      db.transaction(tx => {
+  const promise = new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      for (const complaint of complaints) {
         tx.executeSql(
           "INSERT INTO complaints (id,title,status, complainer, assignedTo, onModel, companyId, timeStamp) VALUES(?,?,?,?,?,?,?,?)",
           [
@@ -112,10 +109,11 @@ export const insertManyComplaint = complaints => {
             reject(err);
           }
         );
-      });
+      }
     });
-    return promise;
-  }
+  });
+
+  return promise;
 };
 
 // fetch complaint

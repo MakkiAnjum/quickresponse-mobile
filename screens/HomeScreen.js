@@ -73,20 +73,6 @@ class HomeScreen extends Component {
         console.log("complainer");
         const { data } = await getComplaints();
 
-        // for (const complaint of data) {
-        //   const result = await insertComplaint(
-        //     complaint._id,
-        //     complaint.title,
-        //     complaint.status,
-        //     complaint.complainer,
-        //     complaint.assignedTo,
-        //     complaint.onModel,
-        //     complaint.companyId,
-        //     complaint.timeStamp
-        //   );
-        //   console.log(result, "result");
-        // }
-
         const resolved = data.filter(cmp => cmp.status != "in-progress");
         const inprogress = data.filter(cmp => cmp.status === "in-progress");
         this.setState({ complaints: data });
@@ -96,6 +82,9 @@ class HomeScreen extends Component {
       if (user.role === "admin") {
         const { data } = await getAdminComplaints();
         // console.log("admin", data.length);
+
+        const result = await insertManyComplaint(data);
+        console.log(result, "result");
 
         const resolved = data.filter(cmp => cmp.status != "in-progress");
         const inprogress = data.filter(cmp => cmp.status === "in-progress");

@@ -1,6 +1,12 @@
 import React, { Component } from "react";
-
-import { View, Text, ActivityIndicator, Modal, StyleSheet } from "react-native";
+import {
+  View,
+  Alert,
+  Text,
+  ActivityIndicator,
+  Modal,
+  StyleSheet
+} from "react-native";
 import { Card } from "react-native-elements";
 import { getAllCompanies } from "../services/companyService";
 import Color from "../constants/Color";
@@ -14,8 +20,14 @@ class Companies extends Component {
 
   async componentDidMount() {
     this.setState({ isLoading: true });
-    const { data } = await getAllCompanies();
-    this.setState({ companies: data, isLoading: false });
+    try {
+      const { data } = await getAllCompanies();
+      this.setState({ companies: data, isLoading: false });
+    } catch (ex) {
+      if (ex.response && ex.response.status == "404") {
+        Alert.alert("No companies found.");
+      }
+    }
   }
 
   handleClick = companyId => {
