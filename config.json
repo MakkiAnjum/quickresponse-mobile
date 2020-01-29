@@ -1,4 +1,4 @@
 {
-  "apiUrl": "http://192.168.137.29:5000/api",
-  "apiEndpoint": "http://192.168.137.29:5000"
+  "apiUrl": "https://powerful-reef-09396.herokuapp.com/api",
+  "apiEndpoint": "https://powerful-reef-09396.herokuapp.com"
 }

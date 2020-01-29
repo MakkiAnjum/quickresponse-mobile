@@ -11,13 +11,13 @@ import config from "./config.json";
 import openSocket from "socket.io-client";
 const socket = openSocket(config.apiEndpoint);
 
-import { init } from "./helpers/db";
+// import { init } from "./helpers/db";
 
 useScreens();
 
-init()
-  .then(() => console.log("Done"))
-  .catch(err => console.log("Err", err));
+// init()
+//   .then(() => console.log("Done"))
+//   .catch(err => console.log("Err", err));
 
 const fetchFonts = () => {
   return Font.loadAsync({

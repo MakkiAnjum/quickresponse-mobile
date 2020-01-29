@@ -83,8 +83,8 @@ class HomeScreen extends Component {
         const { data } = await getAdminComplaints();
         // console.log("admin", data.length);
 
-        const result = await insertManyComplaint(data);
-        console.log(result, "result");
+        // const result = await insertManyComplaint(data);
+        // console.log(result, "result");
 
         const resolved = data.filter(cmp => cmp.status != "in-progress");
         const inprogress = data.filter(cmp => cmp.status === "in-progress");
